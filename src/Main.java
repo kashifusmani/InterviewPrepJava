@@ -4,12 +4,12 @@ public class Main {
 
     public static void main(String[] args) {
         SmartLookup sm = new SmartLookup();
-        sm.insert("a", "aValue", 1l);
-        sm.insert("a", "bValue", 10l);
-        sm.insert("a", "cValue", 20l);
-        sm.insert("b", "aValue", 1l);
-        sm.insert("b", "bValue", 10l);
-        sm.insert("b", "cValue", 20l);
+        sm.insert("a", "aValue");
+        sm.insert("a", "bValue");
+        sm.insert("a", "cValue");
+        sm.insert("b", "aValue");
+        sm.insert("b", "bValue");
+        sm.insert("b", "cValue");
 
         System.out.println(sm.get("a"));
         System.out.println(sm.get("a", 0l));
@@ -20,14 +20,16 @@ public class Main {
 
 class SmartLookup {
     private Map<String, SortedMap<Long, String>> mainLookup;
-    private Map<String, Stack<Long>> timestampLookup;
+    private Map<String, Stack<Long>> timestampLookup; //Stack is needed because if one key is removed, we need to remember the order.
 
     public SmartLookup() {
         mainLookup = new HashMap<>();
         timestampLookup = new HashMap<>();
     }
 
-    public void insert(String key, String value, Long timestamp) {
+    public void insert(String key, String value) {
+        long timestamp = System.currentTimeMillis();
+        //sychronized(this)
         if (! mainLookup.containsKey(key)) {
             SortedMap<Long, String> sm = new TreeMap<>();
             sm.put(timestamp, value);
@@ -53,11 +55,13 @@ class SmartLookup {
     public String get(String key, Long timestamp) {
         if (mainLookup.containsKey(key)) {
             TreeMap<Long, String> innerMap = (TreeMap<Long, String>) mainLookup.get(key);
-            Map.Entry<Long, String> entry = innerMap.floorEntry(timestamp);
+            Map.Entry<Long, String> entry = innerMap.floorEntry(timestamp);//For first iteration, just use .get()
             if (entry!=null) {
                 return entry.getValue();
             }
         }
         return null;
     }
+    //public String remove(String key) -> remove all entries from mainLookup
+    //public String remove(String key, long timestamp) -> remove entry from mainLookup, also from timestampLookup
 }
